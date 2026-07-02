@@ -1,0 +1,11 @@
+pandas
+numpy
+streamlit
+plotly
+openai
+python-dotenv
+chromadb
+langchain
+langchain-community
+pypdf
+sentence-transformers
