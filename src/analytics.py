@@ -10,7 +10,7 @@ def load_and_optimize_data():
     
     print("⏳ Analyzing CSV schema and column headers...")
     
-    # Read just the first row to inspect what headers Zongao Bian used in this version
+    # Read just the first row to inspect what headers are used in this version
     preview_df = pd.read_csv(DATA_PATH, nrows=1)
     available_columns = preview_df.columns.tolist()
     
