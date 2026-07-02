@@ -216,3 +216,12 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# === Joblore Custom Exclusions ===
+*.csv
+*.xlsx
+/data/
+*.pdf
+/docs/
+/chroma_db/
+.env
