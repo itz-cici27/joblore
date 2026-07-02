@@ -80,6 +80,7 @@ def load_and_optimize_data():
     print(f"✅ Loaded {len(df):,} certified records into Joblore analytics engine core!")
     return df
 
+# FEATURE 1: Discovery Search (By State & Role Keyword)
 def get_top_sponsors_by_state_and_role(df, state_code, search_role):
     # Filter by target state (handle both full state names or two-letter codes if raw text is messy)
     filtered_df = df[df['WORKSITE_STATE'].str.contains(state_code.upper(), na=False)]
@@ -102,13 +103,40 @@ def get_top_sponsors_by_state_and_role(df, state_code, search_role):
     
     return top_10
 
+# FEATURE 2: Specific Company Profile Lookup
+def get_employer_analytics(df, employer_name):
+    emp_df = df[df['EMPLOYER_NAME'] == employer_name.upper().strip()]
+    
+    if emp_df.empty:
+        return {"error": f"No certified records found for employer: {employer_name}"}
+        
+    total_sponsorships = len(emp_df)
+    median_salary = emp_df['PREVAILING_WAGE'].median()
+    
+    # Extract top 5 jobs and top 3 geographic hubs
+    top_roles = emp_df['JOB_TITLE'].value_counts().head(5).to_dict()
+    top_states = emp_df['WORKSITE_STATE'].value_counts().head(3).to_dict()
+    
+    return {
+        "employer": employer_name.upper(),
+        "total_sponsorships": total_sponsorships,
+        "median_salary": round(median_salary, 2),
+        "top_roles": top_roles,
+        "top_states": top_states
+    }
+
+
 if __name__ == "__main__":
     try:
         master_df = load_and_optimize_data()
         
-        print("\n🔍 Running test analytics pipeline [Role: DATA, State: IL]...")
-        test_results = get_top_sponsors_by_state_and_role(master_df, "IL", "DATA")
-        print(test_results.to_string(index=False))
+        print("\n🔍 Testing Feature 1 [Role: DATA, State: IL]...")
+        test_discover = get_top_sponsors_by_state_and_role(master_df, "IL", "DATA")
+        print(test_discover.to_string(index=False))
+        
+        print("\n🔍 Testing Feature 2 [Company Profile: GOOGLE LLC]...")
+        test_profile = get_employer_analytics(master_df, "GOOGLE LLC")
+        print(test_profile)
         
     except Exception as e:
         print(f"❌ Error occurred: {e}")
