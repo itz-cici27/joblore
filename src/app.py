@@ -15,20 +15,25 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # --- 1. PAGE SETUP ---
 st.set_page_config(page_title="Joblore | Career Intelligence", page_icon="🧭", layout="wide")
-st.title("🧭 Joblore")
+st.title("Joblore")
 st.markdown("Eliminating information asymmetry for international students navigating the U.S. labor market.")
 
 # --- 2. CACHING THE DATA ENGINE ---
 @st.cache_data
 def init_data():
-    """Loads the 500k+ row dataset into RAM only once to keep the app blazing fast."""
+    """Loads the 500,000+ row dataset into RAM only once to keep the app blazing fast."""
     return load_and_optimize_data()
 
 with st.spinner("⏳ Booting up the Joblore Data Engine..."):
     master_df = init_data()
+    
+    # Extract unique, sorted lists directly from the dataset for our dropdowns
+    state_list = sorted(master_df['WORKSITE_STATE'].dropna().unique().tolist())
+    role_list = sorted(master_df['JOB_TITLE'].dropna().unique().tolist())
+    company_list = sorted(master_df['EMPLOYER_NAME'].dropna().unique().tolist())
 
 # --- 3. UI LAYOUT: TABS ---
-tab1, tab2, tab3 = st.tabs(["🌎 Discovery Hub", "🏢 Employer Profiles", "⚖️ Compliance Assistant"])
+tab1, tab2, tab3 = st.tabs(["Discovery Hub", "Employer Profiles", "Compliance Assistant"])
 
 # === TAB 1: MACRO DISCOVERY ===
 with tab1:
@@ -36,9 +41,14 @@ with tab1:
     
     col1, col2 = st.columns(2)
     with col1:
-        target_state = st.text_input("State Code (e.g., IL, CA, NY)", value="IL")
+        # Safely set a default index if "IL" exists in the data
+        default_state = state_list.index("IL") if "IL" in state_list else 0
+        target_state = st.selectbox("State Code (Type to search)", options=state_list, index=default_state)
+    
     with col2:
-        target_role = st.text_input("Job Role (e.g., DATA, SOFTWARE)", value="DATA")
+        # Default to a generic data role if available
+        default_role = role_list.index("DATA SCIENTIST") if "DATA SCIENTIST" in role_list else 0
+        target_role = st.selectbox("Job Role (Type to search)", options=role_list, index=default_role)
 
     if st.button("Search Market"):
         results = get_top_sponsors_by_state_and_role(master_df, target_state, target_role)
@@ -64,7 +74,10 @@ with tab1:
 # === TAB 2: MICRO EMPLOYER PROFILES ===
 with tab2:
     st.header("Deep Dive: Company Sponsorship Profile")
-    company_search = st.text_input("Enter Company Name (e.g., GOOGLE LLC)", value="GOOGLE LLC")
+    
+    # Searchable dropdown for exact company names
+    default_company = company_list.index("GOOGLE LLC") if "GOOGLE LLC" in company_list else 0
+    company_search = st.selectbox("Search Company Name", options=company_list, index=default_company)
     
     if st.button("Analyze Employer"):
         profile = get_employer_analytics(master_df, company_search)
