@@ -6,8 +6,8 @@ from dotenv import load_dotenv
 from openai import OpenAI
 
 # Import your custom backend engines
-from src.analytics import load_and_optimize_data, get_top_sponsors_by_state_and_role, get_employer_analytics
-from src.rag import query_compliance_engine
+from analytics import load_and_optimize_data, get_top_sponsors_by_state_and_role, get_employer_analytics
+from rag import query_compliance_engine
 
 # Load environment variables (API Keys)
 load_dotenv()
