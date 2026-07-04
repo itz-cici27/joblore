@@ -1,8 +1,49 @@
 import pandas as pd
 import os
+import re
 
 # Define the absolute path to your data file
 DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "Combined_LCA_Disclosure_Data_FY2020_to_FY2024.csv")
+
+def normalize_job_title(title: str) -> str:
+    """Standardize job titles to reduce variations and map to high-level categories."""
+    if not isinstance(title, str):
+        return ""
+    # Convert to uppercase and strip whitespace
+    title = title.upper().strip()
+    # Replace common variations
+    replacements = {
+        r'\.\s*NET\s*': 'DOT NET ',  # .NET, . NET, etc.
+        r'\bC\s*#\b': 'C SHARP',     # C#, C #
+        r'\bSQL\s*SERVER\b': 'SQL SERVER',
+        r'\bFRONT\s*END\b': 'FRONTEND',
+        r'\bBACK\s*END\b': 'BACKEND',
+        r'\bFULL\s*STACK\b': 'FULL STACK',
+        r'\bDATA\s*SCIENTIST\b': 'DATA SCIENTIST',
+        r'\bDATA\s*ANALYST\b': 'DATA ANALYST',
+        r'\bBUSINESS\s*ANALYST\b': 'BUSINESS ANALYST',
+        r'\bPROJECT\s*MANAGER\b': 'PROJECT MANAGER',
+        r'\bSOFTWARE\s*ENGINEER\b': 'SOFTWARE ENGINEER',
+        r'\bWEB\s*DEVELOPER\b': 'WEB DEVELOPER',
+        r'\bMOBILE\s*DEVELOPER\b': 'MOBILE DEVELOPER',
+        r'\bANDROID\s*DEVELOPER\b': 'ANDROID DEVELOPER',
+        r'\biOS\s*DEVELOPER\b': 'IOS DEVELOPER',
+        r'\bDEVOPS\b': 'DEVOPS',
+        r'\bQA\s*ENGINEER\b': 'QA ENGINEER',
+        r'\bTEST\s*ENGINEER\b': 'TEST ENGINEER',
+        r'\bNETWORK\s*ENGINEER\b': 'NETWORK ENGINEER',
+        r'\bSYSTEMS\s*ADMINISTRATOR\b': 'SYSTEMS ADMINISTRATOR',
+        r'\bDATABASE\s*ADMINISTRATOR\b': 'DATABASE ADMINISTRATOR',
+        r'\bUX\s*DESIGNER\b': 'UX DESIGNER',
+        r'\bUI\s*DESIGNER\b': 'UI DESIGNER',
+        r'\bPRODUCT\s*MANAGER\b': 'PRODUCT MANAGER',
+    }
+    for pattern, repl in replacements.items():
+        title = re.sub(pattern, repl, title, flags=re.IGNORECASE)
+    # Collapse multiple spaces
+    title = re.sub(r'\s+', ' ', title)
+    title = title.strip()
+    return title
 
 def load_and_optimize_data():
     if not os.path.exists(DATA_PATH):
@@ -70,9 +111,12 @@ def load_and_optimize_data():
     
     # Clean text metrics
     df['EMPLOYER_NAME'] = df['EMPLOYER_NAME'].astype(str).str.upper().str.strip()
-    df['JOB_TITLE'] = df['JOB_TITLE'].astype(str).str.upper().str.strip()
+    # Remove entries that look like non-company (e.g., phone numbers, dates) - keep only those with at least one letter
+    df = df[df['EMPLOYER_NAME'].str.contains('[A-Z]', na=False)]
+    # Normalize job titles to reduce variations and improve readability
+    df['JOB_TITLE'] = df['JOB_TITLE'].apply(normalize_job_title)
     df['WORKSITE_STATE'] = df['WORKSITE_STATE'].astype(str).str.upper().str.strip()
-    
+
     # Clean numeric metrics
     df['PREVAILING_WAGE'] = pd.to_numeric(df['PREVAILING_WAGE'], errors='coerce')
     df = df.dropna(subset=['PREVAILING_WAGE'])

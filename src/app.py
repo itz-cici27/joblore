@@ -29,8 +29,14 @@ with st.spinner("⏳ Booting up the Joblore Data Engine..."):
     
     # Extract unique, sorted lists directly from the dataset for our dropdowns
     state_list = sorted(master_df['WORKSITE_STATE'].dropna().unique().tolist())
-    role_list = sorted(master_df['JOB_TITLE'].dropna().unique().tolist())
-    company_list = sorted(master_df['EMPLOYER_NAME'].dropna().unique().tolist())
+    # Get top N most frequent job roles to reduce clutter in dropdown
+    role_counts = master_df['JOB_TITLE'].value_counts()
+    top_n_roles = role_counts.head(20).index.tolist()
+    role_list = sorted(top_n_roles)
+    # Get top N most frequent companies to reduce clutter in dropdown
+    company_counts = master_df['EMPLOYER_NAME'].value_counts()
+    top_n_companies = company_counts.head(50).index.tolist()
+    company_list = sorted(top_n_companies)
 
 # --- 3. UI LAYOUT: TABS ---
 tab1, tab2, tab3 = st.tabs(["Discovery Hub", "Employer Profiles", "Compliance Assistant"])
